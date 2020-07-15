@@ -24,6 +24,7 @@
 
 	#include "lcd.h"
 	#include "flash_stm32f103_hal_sm.h"
+	#include "ringbuffer_dma.h"
 
 /*
 **************************************************************************

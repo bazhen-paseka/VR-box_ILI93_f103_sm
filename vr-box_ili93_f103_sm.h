@@ -18,6 +18,12 @@
 **************************************************************************
 */
 
+	#include <string.h>
+	#include <stdio.h>
+	#include "usart.h"
+
+	#include "lcd.h"
+
 /*
 **************************************************************************
 *								    DEFINES                     
@@ -47,5 +53,9 @@
 *                              FUNCTION PROTOTYPES
 **************************************************************************
 */
+
+	void VRbox_Init (void) ;
+	void VRbox_Main (void) ;
+
 
 #endif /* VRBOX_ILI93_F103_SM_INCLUDED_H_ */

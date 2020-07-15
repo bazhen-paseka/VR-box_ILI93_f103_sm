@@ -9,6 +9,22 @@
 *************************************************************************************
 */
 
+	// 		GPIO to data bus
+	// D0 -> PA9
+	// D1 -> PA7		//	PC7 BAZHEN CHANGE TO PA7 and use #define NEW_BIT1
+	// D2 -> PA10
+	// D3 -> PB3
+	// D4 -> PB5
+	// D5 -> PB4
+	// D6 -> PB10
+	// D7 -> PA8
+
+	// 		GPIO to control bus
+	// RST	->	PB1  	// PC1 BAZHEN CHANGE TO PB1	 and use #define NEW_RST
+	// CS	->	PB0		on board RED-LED
+	// RS	->	PA4		(CD)
+	// WR	->	PA1
+	// RD	->	PA0
 /*
 **************************************************************************
 *							INCLUDE FILES
@@ -78,6 +94,20 @@ void VRbox_Init (void) {
 	LCD_SetTextColor(ILI92_GREEN, ILI92_WHITE);
 	LCD_Printf("\n START 'VRGC-056th'\n ");
 	LCD_Printf("for_debug USART2 on PA2 115200/8-N-1 \n");
+
+	LCD_Printf(" Flash read...   ");
+	uint32_t flash_word_u32 = Flash_Read(MY_FLASH_PAGE_ADDR);
+	LCD_Printf(" 0x%x; \n", flash_word_u32);
+	LCD_Printf(" Rotation: \"%s\"; \n ", (char *)&flash_word_u32);
+
+	#define STRING_LEFT  ( (uint32_t) 0x7466654C )
+	#define STRING_RIGHT ( (uint32_t) 0x74676952 )
+
+	switch (flash_word_u32)	{
+		 case 	STRING_LEFT :	LCD_SetRotation(3);		break;
+		 case 	STRING_RIGHT:	LCD_SetRotation(1);		break;
+		 default:				LCD_SetRotation(1);		break;
+	}
 }
 //***************************************************************************
 

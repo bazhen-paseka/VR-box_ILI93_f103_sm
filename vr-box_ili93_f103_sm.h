@@ -22,6 +22,7 @@
 	#include <stdio.h>
 	#include "usart.h"
 
+	#include "vrbox_local_config.h"
 	#include "lcd.h"
 	#include "flash_stm32f103_hal_sm.h"
 	#include "ringbuffer_dma.h"
@@ -37,6 +38,11 @@
 *								   DATA TYPES
 **************************************************************************
 */
+
+	typedef struct	{
+		UART_HandleTypeDef * uart_debug	;
+	} Debug_struct 						;
+//***********************************************************
 
 /*
 **************************************************************************

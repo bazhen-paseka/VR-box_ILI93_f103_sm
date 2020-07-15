@@ -88,26 +88,39 @@
 */
 
 void VRbox_Init (void) {
-	LCD_Init();
-	LCD_SetRotation(1);
-	LCD_FillScreen(ILI92_WHITE);
-	LCD_SetTextColor(ILI92_GREEN, ILI92_WHITE);
-	LCD_Printf("\n START 'VRGC-056th'\n ");
-	LCD_Printf("for_debug USART2 on PA2 115200/8-N-1 \n");
 
-	LCD_Printf(" Flash read...   ");
-	uint32_t flash_word_u32 = Flash_Read(MY_FLASH_PAGE_ADDR);
-	LCD_Printf(" 0x%x; \n", flash_word_u32);
-	LCD_Printf(" Rotation: \"%s\"; \n ", (char *)&flash_word_u32);
+	#define	DEBUG_STRING_SIZE		300
+	char DebugStr[DEBUG_STRING_SIZE];
+	sprintf(DebugStr," START\r\n") ;
+	HAL_UART_Transmit(&huart2, (uint8_t *)DebugStr, strlen(DebugStr), 100) ;
 
 	#define STRING_LEFT  ( (uint32_t) 0x7466654C )
 	#define STRING_RIGHT ( (uint32_t) 0x74676952 )
 
+	sprintf(DebugStr," Flash read...   ") ;
+	HAL_UART_Transmit(&huart2, (uint8_t *)DebugStr, strlen(DebugStr), 100) ;
+
+	uint32_t flash_word_u32 = Flash_Read(MY_FLASH_PAGE_ADDR);
+	sprintf(DebugStr," 0x%x; \n", (int)flash_word_u32) ;
+	HAL_UART_Transmit(&huart2, (uint8_t *)DebugStr, strlen(DebugStr), 100) ;
+	//LCD_Printf(" Rotation: \"%s\"; \n ", (char *)&flash_word_u32);
+	sprintf(DebugStr," Rotation: \"%s\"; \n ", (char *)&flash_word_u32) ;
+	HAL_UART_Transmit(&huart2, (uint8_t *)DebugStr, strlen(DebugStr), 100) ;
+
+	LCD_Init();
 	switch (flash_word_u32)	{
 		 case 	STRING_LEFT :	LCD_SetRotation(3);		break;
 		 case 	STRING_RIGHT:	LCD_SetRotation(1);		break;
 		 default:				LCD_SetRotation(1);		break;
 	}
+
+	//LCD_Init();
+	//LCD_SetRotation(1);
+	LCD_FillScreen(ILI92_WHITE);
+	LCD_SetTextColor(ILI92_GREEN, ILI92_WHITE);
+	LCD_Printf("\n START 'VRGC-056th'\n ");
+	LCD_Printf("for_debug USART2 on PA2 115200/8-N-1 \n");
+	LCD_Printf(" Rotation: \"%s\"; \n ", (char *)&flash_word_u32);
 }
 //***************************************************************************
 
@@ -115,6 +128,14 @@ void VRbox_Main (void) {
 	#define	DEBUG_STRING_SIZE		300
 	char DebugStr[DEBUG_STRING_SIZE];
 	sprintf(DebugStr," cntr %04u\r\n", (int)pointer_u32++) ;
+	HAL_UART_Transmit(&huart2, (uint8_t *)DebugStr, strlen(DebugStr), 100) ;
+
+	LCD_SetCursor(150, 100);
+	LCD_Printf("%04d", pointer_u32 );
+
+	uint8_t DebugRC[DEBUG_STRING_SIZE];
+	HAL_UART_Receive(&huart2, (uint8_t *)DebugRC, 1, 100) ;
+	sprintf(DebugStr," char:  %c\r\n", (int)DebugRC) ;
 	HAL_UART_Transmit(&huart2, (uint8_t *)DebugStr, strlen(DebugStr), 100) ;
 	HAL_Delay(1000) ;
 }

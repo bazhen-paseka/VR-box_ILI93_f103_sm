@@ -40,6 +40,9 @@
 **************************************************************************
 */
 
+	#define LCD_OFFSET		(20)
+	#define STRING_LEFT  ( (uint32_t) 0x7466654C )
+	#define STRING_RIGHT ( (uint32_t) 0x74676952 )
 
 /*
 **************************************************************************
@@ -82,6 +85,8 @@
 	RingBuffer_DMA		rx_buffer	= { 0 }	;
 	//DMA_HandleTypeDef * hdma_rx_handler			;
 	int length_int = 0 ;
+	uint8_t lcd_position_u8 = 0;
+	int cursor_int = 0;
 
 /*
 **************************************************************************
@@ -107,9 +112,6 @@ void VRbox_Init (void) {
 	sprintf(debugString," START\r\n") ;
 	Debug_print( debugString ) ;
 
-	#define STRING_LEFT  ( (uint32_t) 0x7466654C )
-	#define STRING_RIGHT ( (uint32_t) 0x74676952 )
-
 	sprintf(debugString," Flash read..  ") ;
 	Debug_print( debugString ) ;
 
@@ -122,9 +124,15 @@ void VRbox_Init (void) {
 
 	LCD_Init();
 	switch (flash_word_u32)	{
-		 case 	STRING_LEFT :	LCD_SetRotation(3);		break;
-		 case 	STRING_RIGHT:	LCD_SetRotation(1);		break;
-		 default:				LCD_SetRotation(1);		break;
+		 case 	STRING_LEFT :	{ LCD_SetRotation(3) ; lcd_position_u8 = 0 ; }	break;
+		 case 	STRING_RIGHT:	{ LCD_SetRotation(1) ; lcd_position_u8 = 1 ; }	break;
+		 default:				{ LCD_SetRotation(1) ; lcd_position_u8 = 0 ; }	break;
+	}
+
+	if ( lcd_position_u8 == 0 ) {
+		cursor_int = 150 + (LCD_OFFSET) ;
+	} else {
+		cursor_int = 150 - (LCD_OFFSET) ;
 	}
 
 	//LCD_Init();
@@ -160,7 +168,7 @@ void VRbox_Main (void) {
 	sprintf(DebugStr," cntr %04u\r\n", (int)pointer_u32++) ;
 	HAL_UART_Transmit(&huart2, (uint8_t *)DebugStr, strlen(DebugStr), 100) ;
 
-	LCD_SetCursor(150, 100);
+	LCD_SetCursor(cursor_int, 100);
 	LCD_Printf("%04d", pointer_u32 );
 
 	uint8_t DebugRC[DEBUG_STRING_SIZE] = { 0 };
@@ -173,7 +181,8 @@ void VRbox_Main (void) {
 	if (length_int >0 ) {
 		snprintf(DebugStr, 2, "%c", (int)DebugRC[0]) ;
 		Debug_print( DebugStr ) ;
-		LCD_SetCursor(150, 120);
+
+		LCD_SetCursor(cursor_int, 120);
 		LCD_Printf(DebugStr);
 	}
 	length_int = 0 ;

@@ -72,7 +72,12 @@
 */
 
 void VRbox_Init (void) {
-
+	LCD_Init();
+	LCD_SetRotation(1);
+	LCD_FillScreen(ILI92_WHITE);
+	LCD_SetTextColor(ILI92_GREEN, ILI92_WHITE);
+	LCD_Printf("\n START 'VRGC-056th'\n ");
+	LCD_Printf("for_debug USART2 on PA2 115200/8-N-1 \n");
 }
 //***************************************************************************
 

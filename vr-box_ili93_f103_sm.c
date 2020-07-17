@@ -130,13 +130,11 @@ void VRbox_Init (void) {
 	}
 
 	if ( lcd_position_u8 == 0 ) {
-		cursor_int = 150 + (LCD_OFFSET) ;
+		cursor_int = 100 + (LCD_OFFSET) ;
 	} else {
-		cursor_int = 150 - (LCD_OFFSET) ;
+		cursor_int = 100 - (LCD_OFFSET) ;
 	}
 
-	//LCD_Init();
-	//LCD_SetRotation(1);
 	LCD_FillScreen(ILI92_WHITE);
 	LCD_SetTextColor(ILI92_GREEN, ILI92_WHITE);
 	LCD_Printf("\n START 'VRGC-056th'\n ");
@@ -156,6 +154,8 @@ void VRbox_Init (void) {
 
 	snprintf(debugString, 11, " Rot: %s", (char *)&flash_word_u32) ;
 	LCD_Printf(debugString);
+	HAL_Delay(2000) ;
+	LCD_FillScreen(ILI92_WHITE);
 
 	RingBuffer_DMA_Init ( &rx_buffer, &hdma_usart2_rx, rx_circular_buffer, RX_BUFFER_SIZE) ;  	// Start UART receive
 	status_res = HAL_UART_Receive_DMA(	&huart2, rx_circular_buffer, RX_BUFFER_SIZE ) ;  	// how many bytes in buffer
@@ -168,25 +168,30 @@ void VRbox_Main (void) {
 	sprintf(DebugStr," cntr %04u\r\n", (int)pointer_u32++) ;
 	HAL_UART_Transmit(&huart2, (uint8_t *)DebugStr, strlen(DebugStr), 100) ;
 
+	LCD_DrawRect(50, 50, 220, 140, ILI92_MAGENTA);
+
 	LCD_SetCursor(cursor_int, 100);
-	LCD_Printf("%04d", pointer_u32 );
+	//LCD_Printf("%04d", pointer_u32 );
+	LCD_Printf("AminO-789");
 
-	uint8_t DebugRC[DEBUG_STRING_SIZE] = { 0 };
-	uint32_t 	rx_count = RingBuffer_DMA_Count ( &rx_buffer ) ;
-	while ( rx_count-- ) {
-		DebugRC[length_int] = RingBuffer_DMA_GetByte ( &rx_buffer ) ;
-		length_int++ ;
+	while (1) {
+		uint8_t DebugRC[DEBUG_STRING_SIZE] = { 0 };
+		uint32_t 	rx_count = RingBuffer_DMA_Count ( &rx_buffer ) ;
+		while ( rx_count-- ) {
+			DebugRC[length_int] = RingBuffer_DMA_GetByte ( &rx_buffer ) ;
+			length_int++ ;
+		}
+
+		if (length_int >0 ) {
+			snprintf(DebugStr, length_int+1, "%c", (int)DebugRC[0]) ;
+			Debug_print( DebugStr ) ;
+
+			LCD_SetCursor(cursor_int, 120);
+			LCD_Printf(DebugStr);
+		}
+		length_int = 0 ;
+		HAL_Delay(100) ;
 	}
-
-	if (length_int >0 ) {
-		snprintf(DebugStr, 2, "%c", (int)DebugRC[0]) ;
-		Debug_print( DebugStr ) ;
-
-		LCD_SetCursor(cursor_int, 120);
-		LCD_Printf(DebugStr);
-	}
-	length_int = 0 ;
-	HAL_Delay(1000) ;
 }
 
 //***************************************************************************

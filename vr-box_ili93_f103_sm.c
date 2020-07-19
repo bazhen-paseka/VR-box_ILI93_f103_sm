@@ -208,7 +208,7 @@ void VRbox_Main (void) {
 			previous_drav_cipher_u8 = current_drav_cipher_u8;
 		}
 		length_int = 0 ;
-		HAL_Delay(100) ;
+		HAL_Delay(50) ;
 	}
 }
 

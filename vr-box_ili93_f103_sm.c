@@ -127,16 +127,10 @@ void VRbox_Init (void) {
 
 	LCD_Init();
 	switch (flash_word_u32)	{
-		 case 	STRING_LEFT :	{ LCD_SetRotation(3) ; lcd_position_u8 = 0 ; }	break;
-		 case 	STRING_RIGHT:	{ LCD_SetRotation(1) ; lcd_position_u8 = 1 ; }	break;
+		 case 	STRING_LEFT :	{ LCD_SetRotation(3) ; lcd_position_u8 = 0 ; }	break;		//	 left: + LCD_OFFSET
+		 case 	STRING_RIGHT:	{ LCD_SetRotation(1) ; lcd_position_u8 = 1 ; }	break;		//	right: - LCD_OFFSET
 		 default:				{ LCD_SetRotation(1) ; lcd_position_u8 = 0 ; }	break;
 	}
-
-//	if ( lcd_position_u8 == 0 ) {
-//		cursor_int = 100 + (LCD_OFFSET) ;
-//	} else {
-//		cursor_int = 100 - (LCD_OFFSET) ;
-//	}
 
 	cursor_int = 100 + (LCD_OFFSET) - ( lcd_position_u8 * 2 * (LCD_OFFSET) ) ;
 
@@ -178,8 +172,6 @@ void VRbox_Main (void) {
 	HAL_UART_Transmit(&huart2, (uint8_t *)DebugStr, strlen(DebugStr), 100) ;
 
 	LCD_SetCursor(cursor_int, 100);
-	//LCD_Printf("%04d", pointer_u32 );
-	//LCD_Printf("5");
 
 	while (1) {
 		uint8_t DebugRC[DEBUG_STRING_SIZE] = { 0 };
@@ -202,8 +194,7 @@ void VRbox_Main (void) {
 			} else if (DebugRC[0] > 0x60) {
 				current_drav_cipher_u8 = DebugRC[0]-0x57;
 			}
-//			LCD_SetCursor(cursor_int, 120);
-//			LCD_Printf(DebugStr);
+
 			if ( DebugRC[1] == 0x32 ) {
 				DrawCipher(current_drav_cipher_u8, ILI92_MAGENTA, ILI92_LIGHTGRAY, ILI92_LIGHTGRAY );
 			}
@@ -222,6 +213,22 @@ void VRbox_Main (void) {
 
 void DrawCipher (uint8_t _cipher, uint16_t _color_cipher, uint16_t _color_rect, uint16_t _color_fill ) {
 	LCD_SetTextColor(_color_cipher, _color_fill);
+
+
+	#define X_CENTER		160
+	#define Y_CENTER		120
+
+	#define X_START			(160-27-27) = 106
+	#define Y_START			(120-27-27)	=  66
+
+	#define	RECT_SIZE		25
+	#define RECT_OFFSET		 1
+
+	#define	FILL_SIZE		23
+	#define FILL_OFFSET		 1
+
+	#define	CURSOR_OFFSET	 7
+
 	switch (_cipher) {
 		case 0x00: {
 			LCD_DrawRect((134+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 148, 25, 25, _color_rect);
@@ -344,8 +351,6 @@ void DrawCipher (uint8_t _cipher, uint16_t _color_cipher, uint16_t _color_rect, 
 	}
 }
 //***************************************************************************
-
-
 
 /*
 **************************************************************************

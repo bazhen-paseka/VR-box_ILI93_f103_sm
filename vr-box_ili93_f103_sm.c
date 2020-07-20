@@ -87,7 +87,8 @@
 	static uint8_t length_u8 = 0 ;
 	uint8_t lcd_position_u8 = 0;
 	int cursor_int = 0;
-	uint8_t previous_drav_cipher_u8 = 0;
+	uint8_t previous_row_u8 = 0 ;
+	uint8_t previous_col_u8 = 0 ;
 
 /*
 **************************************************************************
@@ -98,7 +99,7 @@
 	void Debug_print( char * _string ) ;
 	void Debug_init( UART_HandleTypeDef * _huart ) ;
 
-	void DrawCipher (uint8_t _cipher, uint16_t _color_cipher, uint16_t _color_rect, uint16_t _color_fill ) ;
+	void DrawCipher (uint8_t _row_u8, uint8_t _col_u8, uint16_t _color_cipher, uint16_t _color_rect, uint16_t _color_fill ) ;
 
 /*
 **************************************************************************
@@ -157,7 +158,7 @@ void VRbox_Init (void) {
 	LCD_FillScreen(ILI92_WHITE);
 	for (int r = 0; r<4; r++) {
 		for (int c = 0; c<4; c++) {
-			DrawCipher(10*r+c, ILI92_GREEN, ILI92_MAGENTA, ILI92_WHITE);
+			DrawCipher(r, c, ILI92_GREEN, ILI92_MAGENTA, ILI92_WHITE);
 		}
 	}
 
@@ -183,24 +184,24 @@ void VRbox_Main (void) {
 		}
 
 		if (length_u8 >= 5 ) {
-//			for (int c=0; c<3; c++) {
-	//			sprintf(DebugStr, "%c", DebugRC[c] ) ;
-			sprintf(DebugStr, "%c%c%c%c%c", DebugRC[0], DebugRC[1], DebugRC[2], DebugRC[3], DebugRC[4] ) ;
-				Debug_print( DebugStr ) ;
-			//}
-			DrawCipher(previous_drav_cipher_u8, ILI92_GREEN, ILI92_MAGENTA, ILI92_WHITE  );
 
-			uint8_t current_drav_cipher_u8 = 0;
-			current_drav_cipher_u8 = 10*(DebugRC[0]-0x30) + (DebugRC[1]-0x30);
+			sprintf(DebugStr, "%c%c%c%c%c", DebugRC[0], DebugRC[1], DebugRC[2], DebugRC[3], DebugRC[4] ) ;
+			Debug_print( DebugStr ) ;
+
+			DrawCipher(previous_row_u8, previous_col_u8, ILI92_GREEN, ILI92_MAGENTA, ILI92_WHITE  );
+
+			uint8_t row_u8 = DebugRC[0]-0x30 ;
+			uint8_t col_u8 = DebugRC[1]-0x30 ;
 
 			if ( DebugRC[2] == 0x31 ) {
-				DrawCipher(current_drav_cipher_u8, ILI92_MAGENTA, ILI92_LIGHTGRAY, ILI92_LIGHTGRAY );
+				DrawCipher(row_u8, col_u8, ILI92_MAGENTA, ILI92_LIGHTGRAY, ILI92_LIGHTGRAY );
 			}
 			if ( DebugRC[2] == 0x30 ) {
-				DrawCipher(current_drav_cipher_u8, ILI92_WHITE, ILI92_BLACK, ILI92_BLACK );
+				DrawCipher(row_u8, col_u8, ILI92_WHITE, ILI92_BLACK, ILI92_BLACK );
 			}
 
-			previous_drav_cipher_u8 = current_drav_cipher_u8;
+			previous_row_u8 = row_u8;
+			previous_col_u8 = col_u8;
 			length_u8 = 0 ;
 		}
 		HAL_Delay(10) ;
@@ -209,15 +210,10 @@ void VRbox_Main (void) {
 
 //***************************************************************************
 
-void DrawCipher (uint8_t _cipher, uint16_t _color_cipher, uint16_t _color_rect, uint16_t _color_fill ) {
-	LCD_SetTextColor(_color_cipher, _color_fill);
-
+void DrawCipher (uint8_t _row_u8, uint8_t _col_u8, uint16_t _color_cipher, uint16_t _color_rect, uint16_t _color_fill ) {
 
 	#define X_CENTER		160
 	#define Y_CENTER		120
-
-	//uint32_t x_start_u32 = 	(160-27-27); 	// = 106
-	//uint32_t y_start_u32 = 	(120-27-27);	// =  66
 
 	#define	RECT_SIZE		25
 	#define RECT_OFFSET		 1
@@ -227,126 +223,22 @@ void DrawCipher (uint8_t _cipher, uint16_t _color_cipher, uint16_t _color_rect, 
 
 	#define	CURSOR_OFFSET	 7
 
-	switch (_cipher) {
-		case 31: {
-			LCD_DrawRect((134+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 148, 25, 25, _color_rect);
-			LCD_FillRect((134+1+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 148+1, 23, 23, _color_fill);
-			LCD_SetCursor((7+134+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 7+148 );
-			LCD_Printf("0");
-		} break;
+	const 	char 	keyboard_char[4][4]	= { { '1', '2', '3', 'A' },
+											{ '4', '5', '6', 'B' },
+											{ '7', '8', '9', 'C' },
+											{ '*', '0', '#', 'D' } } ;
 
-		case 00: {
-			LCD_DrawRect((107+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 67, 25, 25, _color_rect);
-			LCD_FillRect((107+1+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 67+1, 23, 23, _color_fill);
-			LCD_SetCursor((7+107+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 7+67 );
-			LCD_Printf("1");
-		} break;
+	const uint32_t x_start_u32 = ( X_CENTER - 2*(RECT_OFFSET + RECT_SIZE + RECT_OFFSET) ) ; 	// = 106
+	const uint32_t y_start_u32 = ( Y_CENTER - 2*(RECT_OFFSET + RECT_SIZE + RECT_OFFSET) ) ;		// =  66
 
-		case 01: {
-			LCD_DrawRect((134+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 67, 25, 25, _color_rect);
-			LCD_FillRect((134+1+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 67+1, 23, 23, _color_fill);
-			LCD_SetCursor((7+134+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 7+67 );
-			LCD_Printf("2");
-		} break;
+	uint32_t x_coord_u32 = x_start_u32 + RECT_OFFSET + _col_u8 * ( RECT_SIZE + RECT_OFFSET ) + LCD_OFFSET - lcd_position_u8*2*(LCD_OFFSET) ;
+	uint32_t y_coord_u32 = y_start_u32 + RECT_OFFSET + _row_u8 * ( RECT_SIZE + RECT_OFFSET ) ;
 
-		case 02: {
-			LCD_DrawRect((161+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 67, 25, 25, _color_rect);
-			LCD_FillRect((161+1+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 67+1, 23, 23, _color_fill);
-			LCD_SetCursor((7+161+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 7+67 );
-			LCD_Printf("3");
-		} break;
-
-		case 10: {
-			LCD_DrawRect((107+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 94, 25, 25, _color_rect);
-			LCD_FillRect((107+1+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 94+1, 23, 23, _color_fill);
-			LCD_SetCursor((7+107+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 7+94 );
-			LCD_Printf("4");
-		} break;
-
-		case 11: {
-			LCD_DrawRect((134+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 94, 25, 25, _color_rect);
-			LCD_FillRect((134+1+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 94+1, 23, 23, _color_fill);
-			LCD_SetCursor((7+134+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 7+94 );
-			LCD_Printf("5");
-		} break;
-
-		case 12: {
-			LCD_DrawRect((161+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 94, 25, 25, _color_rect);
-			LCD_FillRect((161+1+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 94+1, 23, 23, _color_fill);
-			LCD_SetCursor((7+161+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 7+94 );
-			LCD_Printf("6");
-		} break;
-
-		case 20: {
-			LCD_DrawRect((107+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 121, 25, 25, _color_rect);
-			LCD_FillRect((107+1+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 121+1, 23, 23, _color_fill);
-			LCD_SetCursor((7+107+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 7+121 );
-			LCD_Printf("7");
-		} break;
-
-		case 21: {
-			LCD_DrawRect((134+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 121, 25, 25, _color_rect);
-			LCD_FillRect((134+1+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 121+1, 23, 23, _color_fill);
-			LCD_SetCursor((7+134+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 7+121 );
-			LCD_Printf("8");
-		} break;
-
-		case 22: {
-			LCD_DrawRect((161+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 121, 25, 25, _color_rect);
-			LCD_FillRect((161+1+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 121+1, 23, 23, _color_fill);
-			LCD_SetCursor((7+161+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 7+121 );
-			LCD_Printf("9");
-		} break;
-
-		case 03: {
-			LCD_DrawRect((188+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 67, 25, 25, _color_rect);
-			LCD_FillRect((188+1+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 67+1, 23, 23, _color_fill);
-			LCD_SetCursor((7+188+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 7+67 );
-			LCD_Printf("A");
-		} break;
-
-		case 13: {
-			LCD_DrawRect((188+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 94, 25, 25, _color_rect);
-			LCD_FillRect((188+1+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 94+1, 23, 23, _color_fill);
-			LCD_SetCursor((7+188+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 7+94 );
-			LCD_Printf("B");
-		} break;
-
-		case 23: {
-			LCD_DrawRect((188+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 121, 25, 25, _color_rect);
-			LCD_FillRect((188+1+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 121+1, 23, 23, _color_fill);
-			LCD_SetCursor((7+188+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 7+121 );
-			LCD_Printf("C");
-		} break;
-
-		case 33: {
-			LCD_DrawRect((188+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 148, 25, 25, _color_rect);
-			LCD_FillRect((188+1+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 148+1, 23, 23, _color_fill);
-			LCD_SetCursor((7+188+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 7+148 );
-			LCD_Printf("D");
-		} break;
-
-		case 30: {
-			LCD_DrawRect((107+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 148, 25, 25, _color_rect);
-			LCD_FillRect((107+1+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 148+1, 23, 23, _color_fill);
-			LCD_SetCursor((7+107+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 7+148 );
-			LCD_Printf("*");
-		} break;
-
-		case 32: {
-			LCD_DrawRect((161+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 148, 25, 25, _color_rect);
-			LCD_FillRect((161+1+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 148+1, 23, 23, _color_fill);
-			LCD_SetCursor((7+161+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 7+148 );
-			LCD_Printf("#");
-		} break;
-
-		default :	{
-			LCD_DrawRect((134+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 94, 25, 25, _color_rect);
-			LCD_FillRect((134+1+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 94+1, 23, 23, _color_fill);
-			LCD_SetCursor((7+134+(LCD_OFFSET)-(lcd_position_u8*2*(LCD_OFFSET))), 7+94 );
-			LCD_Printf("?");
-		}	break;
-	}
+	LCD_DrawRect  ( x_coord_u32					, y_coord_u32              		, RECT_SIZE, RECT_SIZE, _color_rect ) ;
+	LCD_FillRect  ( x_coord_u32 + FILL_OFFSET	, y_coord_u32 + FILL_OFFSET		, FILL_SIZE, FILL_SIZE, _color_fill ) ;
+	LCD_SetCursor ( x_coord_u32 + CURSOR_OFFSET	, y_coord_u32 + CURSOR_OFFSET	) ;
+	LCD_SetTextColor(_color_cipher, _color_fill);
+	LCD_Printf("%c", keyboard_char[ _row_u8][ _col_u8]);
 }
 //***************************************************************************
 

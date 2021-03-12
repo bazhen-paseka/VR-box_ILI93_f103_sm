@@ -30,20 +30,15 @@
 *							INCLUDE FILES
 **************************************************************************
 */
-
 	#include "vr-box_ili93_f103_sm.h"
-	extern DMA_HandleTypeDef		hdma_usart2_rx ;
-
 /*
 **************************************************************************
 *							LOCAL DEFINES
 **************************************************************************
 */
-
 	#define LCD_OFFSET		(20)
 	#define STRING_LEFT  ( (uint32_t) 0x7466654C )
 	#define STRING_RIGHT ( (uint32_t) 0x74676952 )
-
 /*
 **************************************************************************
 *							LOCAL CONSTANTS
@@ -56,9 +51,9 @@
 *						    LOCAL DATA TYPES
 **************************************************************************
 */
+	extern DMA_HandleTypeDef		hdma_usart2_rx ;
 
-	Debug_struct 			Debug_ch				= { 0 }	;
-
+	Debug_struct	Debug_ch = { 0 }	;
 /*
 **************************************************************************
 *							  LOCAL TABLES
@@ -77,30 +72,31 @@
 *						 LOCAL GLOBAL VARIABLES
 **************************************************************************
 */
+	#define RX_BUFFER_SIZE		0xFF
 
-	uint32_t pointer_u32 = 0 ;
-	#define RX_BUFFER_SIZE 			0xFF
 	uint8_t				rx_circular_buffer[RX_BUFFER_SIZE] ;
-	HAL_StatusTypeDef	status_res	= { 0 } ;
-	RingBuffer_DMA		rx_buffer	= { 0 }	;
-	//DMA_HandleTypeDef * hdma_rx_handler			;
-	static uint8_t length_u8 = 0 ;
-	uint8_t lcd_position_u8 = 0;
-	int cursor_int = 0;
-	uint8_t previous_row_u8 = 0 ;
-	uint8_t previous_col_u8 = 0 ;
+	HAL_StatusTypeDef	status_res	= { 0 } 	;
+	RingBuffer_DMA		rx_buffer	= { 0 }		;
+	DMA_HandleTypeDef 	*hdma_rx_handler		;
 
+	static	uint8_t 	length_u8			= 0 ;
+			uint32_t 	pointer_u32			= 0 ;
+			uint8_t		lcd_position_u8		= 0 ;
+			uint8_t 	previous_row_u8		= 0 ;
+			uint8_t 	previous_col_u8		= 0 ;
+			int 		cursor_int 			= 0 ;
 /*
 **************************************************************************
 *                        LOCAL FUNCTION PROTOTYPES
 **************************************************************************
 */
-
-	void Debug_print( char * _string ) ;
-	void Debug_init( UART_HandleTypeDef * _huart ) ;
-
-	void DrawCipher (uint8_t _row_u8, uint8_t _col_u8, uint16_t _color_cipher, uint16_t _color_rect, uint16_t _color_fill ) ;
-
+	void Debug_print(	char				*_string 	) ;
+	void Debug_init	(	UART_HandleTypeDef	*_huart		) ;
+	void DrawCipher	(	uint8_t 			 _row_u8		,
+						uint8_t				 _col_u8		,
+						uint16_t 			 _color_cipher	,
+						uint16_t 			 _color_rect	,
+						uint16_t 			 _color_fill 	) ;
 /*
 **************************************************************************
 *                           GLOBAL FUNCTIONS
@@ -162,21 +158,22 @@ void VRbox_Init (void) {
 		}
 	}
 
-	RingBuffer_DMA_Init ( &rx_buffer, &hdma_usart2_rx, rx_circular_buffer, RX_BUFFER_SIZE) ;  	// Start UART receive
-	status_res = HAL_UART_Receive_DMA(	&huart2, rx_circular_buffer, RX_BUFFER_SIZE ) ;  	// how many bytes in buffer
+	RingBuffer_DMA_Init ( &rx_buffer, 	&hdma_usart2_rx , rx_circular_buffer, RX_BUFFER_SIZE) ;  	// Start UART receive
+	status_res = HAL_UART_Receive_DMA( 	&huart2, rx_circular_buffer, RX_BUFFER_SIZE ) ;  	// how many bytes in buffer
 }
 //***************************************************************************
 
 void VRbox_Main (void) {
-	#define	DEBUG_STRING_SIZE		300
-	char DebugStr[DEBUG_STRING_SIZE];
+	#define	DEBUG_RC_SIZE		30
+	char DebugStr[DEBUG_RC_SIZE] = { 0 } ;
+
 //	sprintf(DebugStr," cntr %04u\r\n", (int)pointer_u32++) ;
 //	HAL_UART_Transmit(&huart2, (uint8_t *)DebugStr, strlen(DebugStr), 100) ;
 
 	//LCD_SetCursor(cursor_int, 100);
 
 	while (1) {
-		uint8_t DebugRC[DEBUG_STRING_SIZE] = { 0 };
+		uint8_t DebugRC[DEBUG_RC_SIZE] = { 0 };
 		uint32_t 	rx_count = RingBuffer_DMA_Count ( &rx_buffer ) ;
 		while ( rx_count-- ) {
 			DebugRC[length_u8] = RingBuffer_DMA_GetByte ( &rx_buffer ) ;
@@ -190,13 +187,13 @@ void VRbox_Main (void) {
 
 			DrawCipher(previous_row_u8, previous_col_u8, ILI92_GREEN, ILI92_MAGENTA, ILI92_WHITE  );
 
-			uint8_t row_u8 = DebugRC[0]-0x30 ;
-			uint8_t col_u8 = DebugRC[1]-0x30 ;
+			uint8_t row_u8 = DebugRC[1]-0x30 ;
+			uint8_t col_u8 = DebugRC[2]-0x30 ;
 
-			if ( DebugRC[2] == 0x31 ) {
+			if ( DebugRC[0] == 0x31 ) {
 				DrawCipher(row_u8, col_u8, ILI92_MAGENTA, ILI92_LIGHTGRAY, ILI92_LIGHTGRAY );
 			}
-			if ( DebugRC[2] == 0x30 ) {
+			if ( DebugRC[0] == 0x30 ) {
 				DrawCipher(row_u8, col_u8, ILI92_WHITE, ILI92_BLACK, ILI92_BLACK );
 			}
 
@@ -204,10 +201,12 @@ void VRbox_Main (void) {
 			previous_col_u8 = col_u8;
 			length_u8 = 0 ;
 		}
+		if ( DebugRC[length_u8] == '\n' ) {
+			length_u8 = 0 ;
+		}
 		HAL_Delay(10) ;
 	}
 }
-
 //***************************************************************************
 
 void DrawCipher (uint8_t _row_u8, uint8_t _col_u8, uint16_t _color_cipher, uint16_t _color_rect, uint16_t _color_fill ) {

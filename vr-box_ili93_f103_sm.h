@@ -17,15 +17,19 @@
 *								INCLUDE FILES
 **************************************************************************
 */
-
 	#include <string.h>
 	#include <stdio.h>
+
+	#include "usart.h"
+	#include "main.h"
+	#include "dma.h"
 	#include "usart.h"
 
 	#include "vrbox_local_config.h"
 	#include "lcd.h"
 	#include "flash_stm32f103_hal_sm.h"
 	#include "ringbuffer_dma.h"
+	#include "stm32f1xx_hal_dma.h"
 
 /*
 **************************************************************************
@@ -38,10 +42,16 @@
 *								   DATA TYPES
 **************************************************************************
 */
+	typedef struct	{
+		UART_HandleTypeDef	*uart_debug	;
+	} 		Debug_struct				;
 
 	typedef struct	{
-		UART_HandleTypeDef * uart_debug	;
-	} Debug_struct 						;
+		DMA_HandleTypeDef	*dma_usart	;
+	} 		VRbox_struct				;
+
+	VRbox_struct	VRbox ;
+
 //***********************************************************
 
 /*

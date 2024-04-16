@@ -79,6 +79,8 @@
 	RingBuffer_DMA		rx_buffer	= { 0 }		;
 	DMA_HandleTypeDef 	*hdma_rx_handler		;
 
+	VRbox_struct		VRbox ;
+
 	static	uint8_t 	length_u8			= 0 ;
 			uint32_t 	pointer_u32			= 0 ;
 			uint8_t		lcd_position_u8		= 0 ;

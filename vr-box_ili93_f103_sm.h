@@ -50,8 +50,6 @@
 		DMA_HandleTypeDef	*dma_usart	;
 	} 		VRbox_struct				;
 
-	VRbox_struct	VRbox ;
-
 //***********************************************************
 
 /*
